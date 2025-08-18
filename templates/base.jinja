@@ -1,0 +1,19 @@
+<!doctype html>
+<html>
+  <head><title>{% block title %}PaperPlanes{% endblock %}</title></head>
+  <body>
+    <header> 
+      <h1>--Ppr--Plns--></h1>
+      <nav>
+        <ul>
+            <li><a href="/">Home</a></li>
+            <li><a href="/login">Login</a></li>
+            <li><a href="/register">Register</a></li>
+            <li><a href="/art">Random 1</a></li>
+            <li><a href="/fractal_art">Random 2</a></li>
+        </ul>
+      </nav>
+    </header>
+    {% block content %}{% endblock %}
+  </body>
+</html>

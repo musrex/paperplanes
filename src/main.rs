@@ -5,9 +5,10 @@ mod routes;
 use crate::db::init_db;
 use crate::handlers::handler_404;
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 use dotenvy::dotenv;
-use minijinja::Environment;
+use minijinja::{Environment, path_loader};
+use minijinja_autoreload::Autoreloader;
 use std::{env, sync::Arc};
 
 #[derive(Clone)]
@@ -25,17 +26,13 @@ async fn main() -> Result<()> {
 
     // init template engine and add templates
     let mut templates = Environment::new();
-    templates
-        .add_template("home", include_str!("../templates/home.jinja"))
-        .unwrap();
+    templates.set_loader(path_loader("templates"));
 
     // pass env to handlers via state
     let app_state = Arc::new(AppState { templates, db_pool });
 
     // define routes
     let app = routes::create_router(app_state).fallback(handler_404);
-    //        .route("/art", get(handler_art))
-    //        .with_state(app_state);
 
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
         .await
