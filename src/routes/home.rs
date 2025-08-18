@@ -9,7 +9,7 @@ pub fn routes() -> Router<Arc<AppState>> {
 }
 
 async fn handler_home(State(state): State<Arc<AppState>>) -> Result<Html<String>, StatusCode> {
-    let template = state.templates.get_template("home").unwrap();
+    let template = state.templates.get_template("home.jinja").unwrap();
 
     let rendered = template
         .render(context! {

@@ -1,0 +1,24 @@
+{% extends 'base.jinja' %}
+
+{% block content %}
+<form action="/login" method="post" class="form">
+  <fieldset>
+  <legend>log in</legend>
+  <div class="name-form">
+    <label for="name">name: </label>
+    <input type="text" name="name" id="name" required />
+  </div>
+  <div class="email-form">
+    <label for="email">email: </label>
+    <input type="text" name="email" id="email" required />
+  </div>
+  <div class="password">
+    <label for="password">password: </label>
+    <input type="password" name="password" id="password" required />
+  <div>  
+  <div class="submit-form">
+    <input type="submit" value="Login" />
+  </div>
+  </fieldset>
+</form>
+{% endblock %}
