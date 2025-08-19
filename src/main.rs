@@ -8,7 +8,7 @@ use crate::handlers::handler_404;
 use anyhow::Result;
 use dotenvy::dotenv;
 use minijinja::{Environment, path_loader};
-use minijinja_autoreload::Autoreloader;
+//use minijinja_autoreload::AutoReloader;
 use std::{env, sync::Arc};
 
 #[derive(Clone)]

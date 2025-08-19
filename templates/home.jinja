@@ -2,6 +2,9 @@
 
 {% block content %}
 
-<p> Hello Cordelia</p>
-
+{% if username %}
+  <p> Hello {{ username }}</p>
+{% else %}
+  <p>Welcome, stranger.</p>
+{% endif %}
 {% endblock %}

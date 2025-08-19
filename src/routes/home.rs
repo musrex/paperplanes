@@ -8,13 +8,34 @@ pub fn routes() -> Router<Arc<AppState>> {
     Router::new().route("/", get(handler_home))
 }
 
-async fn handler_home(State(state): State<Arc<AppState>>) -> Result<Html<String>, StatusCode> {
+use axum_extra::extract::cookie::{Cookie, CookieJar};
+
+async fn handler_home(
+    State(state): State<Arc<AppState>>,
+    jar: CookieJar,
+) -> Result<Html<String>, StatusCode> {
     let template = state.templates.get_template("home.jinja").unwrap();
+
+    let username = if let Some(cookie) = jar.get("user_id") {
+        if let Ok(user_id) = cookie.value().parse::<i32>() {
+            if let Ok(record) = sqlx::query!("SELECT username FROM users WHERE id = $1", user_id)
+                .fetch_one(&state.db_pool)
+                .await
+            {
+                Some(record.username)
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    } else {
+        None
+    };
 
     let rendered = template
         .render(context! {
-            title => "Home",
-            welcome_text => "Hello World!",
+            username => username,
         })
         .unwrap();
 
