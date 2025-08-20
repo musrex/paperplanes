@@ -1,4 +1,5 @@
 use crate::AppState;
+
 use argon2::{
     Argon2,
     password_hash::{
@@ -7,10 +8,12 @@ use argon2::{
 };
 
 use axum::{
-    extract::{Form, State},
-    http::StatusCode,
+    extract::{Form, FromRequestParts, State},
+    http::{StatusCode, request::Parts},
     response::{Html, IntoResponse, Redirect},
 };
+
+use axum_login::{AuthUser, AuthnBackend, UserId};
 
 use axum_extra::extract::cookie::{Cookie, CookieJar};
 
@@ -19,6 +22,96 @@ use serde::Deserialize;
 use sqlx;
 use std::sync::Arc;
 use uuid::Uuid;
+
+#[derive(Debug, Clone)]
+struct User {
+    id: i32,
+    username: String,
+    pw_hash: Vec<u8>,
+}
+
+impl AuthUser for User {
+    type Id = i32;
+
+    fn id(&self) -> Self::Id {
+        self.id
+    }
+
+    fn session_auth_hash(&self) -> &[u8] {
+        &self.pw_hash
+    }
+}
+
+#[derive(Clone)]
+struct Backend {
+    state: Arc<AppState>,
+}
+
+impl Backend {
+    pub fn new(state: Arc<AppState>) -> Self {
+        Self { state }
+    }
+}
+
+#[derive(Clone)]
+struct Credentials {
+    username: String,
+    password: String,
+}
+
+impl AuthnBackend for Backend {
+    type User = User;
+    type Credentials = Credentials;
+    type Error = std::convert::Infallible;
+
+    async fn authenticate(
+        &self,
+        creds: Self::Credentials,
+    ) -> Result<Option<Self::User>, Self::Error> {
+        let row = sqlx::query!(
+            "SELECT id, username, password_hash FROM users WHERE username = $1",
+            creds.username
+        )
+        .fetch_optional(&self.state.db_pool)
+        .await
+        .unwrap();
+
+        let Some(row) = row else {
+            return Ok(None);
+        };
+
+        // password verification
+        let parsed_hash = PasswordHash::new(&row.password_hash).unwrap();
+        if Argon2::default()
+            .verify_password(creds.password.as_bytes(), &parsed_hash)
+            .is_ok()
+        {
+            Ok(Some(User {
+                id: row.id,
+                username: row.username,
+                pw_hash: row.password_hash.into_bytes(),
+            }))
+        } else {
+            Ok(None)
+        }
+    }
+
+    async fn get_user(&self, id: &i32) -> Result<Option<Self::User>, Self::Error> {
+        let row = sqlx::query!(
+            "SELECT id, username, password_hash FROM users WHERE id = $1",
+            id
+        )
+        .fetch_optional(&self.state.db_pool)
+        .await
+        .unwrap();
+
+        Ok(row.map(|r| User {
+            id: r.id,
+            username: r.username,
+            pw_hash: r.password_hash.into_bytes(),
+        }))
+    }
+}
 
 #[derive(Deserialize)]
 pub struct AuthForm {
