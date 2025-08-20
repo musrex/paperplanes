@@ -25,13 +25,13 @@ use uuid::Uuid;
 
 #[derive(Debug, Clone)]
 struct User {
-    id: i32,
+    id: i64,
     username: String,
     pw_hash: Vec<u8>,
 }
 
 impl AuthUser for User {
-    type Id = i32;
+    type Id = i64;
 
     fn id(&self) -> Self::Id {
         self.id
@@ -87,7 +87,7 @@ impl AuthnBackend for Backend {
             .is_ok()
         {
             Ok(Some(User {
-                id: row.id,
+                id: row.id as i64,
                 username: row.username,
                 pw_hash: row.password_hash.into_bytes(),
             }))
@@ -96,17 +96,17 @@ impl AuthnBackend for Backend {
         }
     }
 
-    async fn get_user(&self, id: &i32) -> Result<Option<Self::User>, Self::Error> {
+    async fn get_user(&self, id: &i64) -> Result<Option<Self::User>, Self::Error> {
         let row = sqlx::query!(
             "SELECT id, username, password_hash FROM users WHERE id = $1",
-            id
+            id as &i64
         )
         .fetch_optional(&self.state.db_pool)
         .await
         .unwrap();
 
         Ok(row.map(|r| User {
-            id: r.id,
+            id: r.id as i64,
             username: r.username,
             pw_hash: r.password_hash.into_bytes(),
         }))
