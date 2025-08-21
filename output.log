@@ -1,0 +1,155 @@
+warning: unused imports: `FromRequestParts` and `request::Parts`
+  --> src/handlers/auth.rs:11:21
+   |
+11 |     extract::{Form, FromRequestParts, State},
+   |                     ^^^^^^^^^^^^^^^^
+12 |     http::{StatusCode, request::Parts},
+   |                        ^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `UserId`
+  --> src/handlers/auth.rs:16:42
+   |
+16 | use axum_login::{AuthUser, AuthnBackend, UserId};
+   |                                          ^^^^^^
+
+warning: unused imports: `CookieJar` and `Cookie`
+  --> src/handlers/auth.rs:18:35
+   |
+18 | use axum_extra::extract::cookie::{Cookie, CookieJar};
+   |                                   ^^^^^^  ^^^^^^^^^
+
+warning: unused import: `crate::handlers::auth::Backend`
+ --> src/routes/home.rs:2:5
+  |
+2 | use crate::handlers::auth::Backend;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `Cookie`
+  --> src/routes/home.rs:12:35
+   |
+12 | use axum_extra::extract::cookie::{Cookie, CookieJar};
+   |                                   ^^^^^^
+
+warning: unused import: `login_required`
+  --> src/main.rs:10:30
+   |
+10 |     AuthManagerLayerBuilder, login_required,
+   |                              ^^^^^^^^^^^^^^
+
+warning: field `username` is never read
+  --> src/handlers/auth.rs:29:5
+   |
+27 | pub struct User {
+   |            ---- field in this struct
+28 |     id: i64,
+29 |     username: String,
+   |     ^^^^^^^^
+   |
+   = note: `User` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+   = note: `#[warn(dead_code)]` on by default
+
+warning: `paperplanes` (bin "paperplanes") generated 7 warnings (run `cargo fix --bin "paperplanes"` to apply 6 suggestions)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.13s
+     Running `target/debug/paperplanes`
+DATABASE_URL: postgresql://paper:planes@localhost:5432/mydb
+
+thread 'main' panicked at src/main.rs:43:10:
+Something went wrong...: Database(PgDatabaseError { severity: Error, code: "42501", message: "permission denied for database mydb", detail: None, hint: None, position: None, where: None, schema: None, table: None, column: None, data_type: None, constraint: None, file: Some("aclchk.c"), line: Some(3452), routine: Some("aclcheck_error") })
+stack backtrace:
+   0:     0x556d1de79932 - std::backtrace_rs::backtrace::libunwind::trace::hc20b48b31ee52608
+                               at /rustc/17067e9ac6d7ecb70e50f92c1944e545188d2359/library/std/src/../../backtrace/src/backtrace/libunwind.rs:117:9
+   1:     0x556d1de79932 - std::backtrace_rs::backtrace::trace_unsynchronized::h5d207cd20f193d88
+                               at /rustc/17067e9ac6d7ecb70e50f92c1944e545188d2359/library/std/src/../../backtrace/src/backtrace/mod.rs:66:14
+   2:     0x556d1de79932 - std::sys::backtrace::_print_fmt::h46402c32145e026c
+                               at /rustc/17067e9ac6d7ecb70e50f92c1944e545188d2359/library/std/src/sys/backtrace.rs:66:9
+   3:     0x556d1de79932 - <std::sys::backtrace::BacktraceLock::print::DisplayBacktrace as core::fmt::Display>::fmt::hc04c8f544ab24d66
+                               at /rustc/17067e9ac6d7ecb70e50f92c1944e545188d2359/library/std/src/sys/backtrace.rs:39:26
+   4:     0x556d1dea23c3 - core::fmt::rt::Argument::fmt::h2bcd587ea50ac9a4
+                               at /rustc/17067e9ac6d7ecb70e50f92c1944e545188d2359/library/core/src/fmt/rt.rs:184:76
+   5:     0x556d1dea23c3 - core::fmt::write::hfe57b7174b7d8eab
+                               at /rustc/17067e9ac6d7ecb70e50f92c1944e545188d2359/library/core/src/fmt/mod.rs:1481:21
+   6:     0x556d1de75f83 - std::io::default_write_fmt::h20c7e2d50577e95e
+                               at /rustc/17067e9ac6d7ecb70e50f92c1944e545188d2359/library/std/src/io/mod.rs:639:11
+   7:     0x556d1de75f83 - std::io::Write::write_fmt::h154385efa8565236
+                               at /rustc/17067e9ac6d7ecb70e50f92c1944e545188d2359/library/std/src/io/mod.rs:1914:13
+   8:     0x556d1de79782 - std::sys::backtrace::BacktraceLock::print::h0c8f24e22f5873a8
+                               at /rustc/17067e9ac6d7ecb70e50f92c1944e545188d2359/library/std/src/sys/backtrace.rs:42:9
+   9:     0x556d1de7a7e2 - std::panicking::default_hook::{{closure}}::hd07d57e6a602c8e4
+                               at /rustc/17067e9ac6d7ecb70e50f92c1944e545188d2359/library/std/src/panicking.rs:300:22
+  10:     0x556d1de7a5e5 - std::panicking::default_hook::h63d12f7d95bd91ed
+                               at /rustc/17067e9ac6d7ecb70e50f92c1944e545188d2359/library/std/src/panicking.rs:327:9
+  11:     0x556d1de7b182 - std::panicking::rust_panic_with_hook::h33b18b24045abff4
+                               at /rustc/17067e9ac6d7ecb70e50f92c1944e545188d2359/library/std/src/panicking.rs:833:13
+  12:     0x556d1de7af2a - std::panicking::begin_panic_handler::{{closure}}::hf8313cc2fd0126bc
+                               at /rustc/17067e9ac6d7ecb70e50f92c1944e545188d2359/library/std/src/panicking.rs:706:13
+  13:     0x556d1de79e39 - std::sys::backtrace::__rust_end_short_backtrace::h57fe07c8aea5c98a
+                               at /rustc/17067e9ac6d7ecb70e50f92c1944e545188d2359/library/std/src/sys/backtrace.rs:168:18
+  14:     0x556d1de7abbd - __rustc[95feac21a9532783]::rust_begin_unwind
+                               at /rustc/17067e9ac6d7ecb70e50f92c1944e545188d2359/library/std/src/panicking.rs:697:5
+  15:     0x556d1d45b250 - core::panicking::panic_fmt::hd54fb667be51beea
+                               at /rustc/17067e9ac6d7ecb70e50f92c1944e545188d2359/library/core/src/panicking.rs:75:14
+  16:     0x556d1d45b746 - core::result::unwrap_failed::he8e27e02739cd3d2
+                               at /rustc/17067e9ac6d7ecb70e50f92c1944e545188d2359/library/core/src/result.rs:1704:5
+  17:     0x556d1db66cd3 - core::result::Result<T,E>::expect::h7c18c3bdf9e99690
+                               at /home/leandro/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:1061:23
+  18:     0x556d1d4ddc83 - paperplanes::main::{{closure}}::hf65e8a65662faa26
+                               at /home/leandro/Documents/working_dog/Lab/rust/paperplanes/src/main.rs:40:5
+  19:     0x556d1d4e69cd - <core::pin::Pin<P> as core::future::future::Future>::poll::ha2464ab0f7ed4ed7
+                               at /home/leandro/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/future/future.rs:124:9
+  20:     0x556d1d4a73ef - tokio::runtime::park::CachedParkThread::block_on::{{closure}}::h89076e3c4abeca41
+                               at /home/leandro/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.47.1/src/runtime/park.rs:285:60
+  21:     0x556d1d4a639f - tokio::task::coop::with_budget::hbacadbddf16b3783
+                               at /home/leandro/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.47.1/src/task/coop/mod.rs:167:5
+  22:     0x556d1d4a639f - tokio::task::coop::budget::hcefb434ee277eb52
+                               at /home/leandro/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.47.1/src/task/coop/mod.rs:133:5
+  23:     0x556d1d4a639f - tokio::runtime::park::CachedParkThread::block_on::h026cbd78a44c28d0
+                               at /home/leandro/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.47.1/src/runtime/park.rs:285:31
+  24:     0x556d1d566030 - tokio::runtime::context::blocking::BlockingRegionGuard::block_on::heaec357b7f8e8fed
+                               at /home/leandro/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.47.1/src/runtime/context/blocking.rs:66:9
+  25:     0x556d1d4ad76e - tokio::runtime::scheduler::multi_thread::MultiThread::block_on::{{closure}}::h07858ff39fd76648
+                               at /home/leandro/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.47.1/src/runtime/scheduler/multi_thread/mod.rs:87:13
+  26:     0x556d1d4ac482 - tokio::runtime::context::runtime::enter_runtime::h93014d61dd10766e
+                               at /home/leandro/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.47.1/src/runtime/context/runtime.rs:65:16
+  27:     0x556d1d4ad741 - tokio::runtime::scheduler::multi_thread::MultiThread::block_on::h5dc80117a2420e00
+                               at /home/leandro/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.47.1/src/runtime/scheduler/multi_thread/mod.rs:86:9
+  28:     0x556d1d4dc430 - tokio::runtime::runtime::Runtime::block_on_inner::h72a84b03b3016641
+                               at /home/leandro/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.47.1/src/runtime/runtime.rs:358:45
+  29:     0x556d1d4dc74b - tokio::runtime::runtime::Runtime::block_on::h2ee1e80dda5f318d
+                               at /home/leandro/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-1.47.1/src/runtime/runtime.rs:328:13
+  30:     0x556d1d565bbc - paperplanes::main::h534c6a25976551b5
+                               at /home/leandro/Documents/working_dog/Lab/rust/paperplanes/src/main.rs:86:5
+  31:     0x556d1d5d0c4b - core::ops::function::FnOnce::call_once::h0dfe2b87a1da2ff3
+                               at /home/leandro/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/ops/function.rs:250:5
+  32:     0x556d1d49df3d - std::sys::backtrace::__rust_begin_short_backtrace::h931a955efdac0cd1
+                               at /home/leandro/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/std/src/sys/backtrace.rs:152:18
+  33:     0x556d1d4a1181 - std::rt::lang_start::{{closure}}::hea4ea64394703484
+                               at /home/leandro/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/std/src/rt.rs:199:18
+  34:     0x556d1de6edb0 - core::ops::function::impls::<impl core::ops::function::FnOnce<A> for &F>::call_once::he8388e74a9793a12
+                               at /rustc/17067e9ac6d7ecb70e50f92c1944e545188d2359/library/core/src/ops/function.rs:284:13
+  35:     0x556d1de6edb0 - std::panicking::try::do_call::h48342abe4f16044f
+                               at /rustc/17067e9ac6d7ecb70e50f92c1944e545188d2359/library/std/src/panicking.rs:589:40
+  36:     0x556d1de6edb0 - std::panicking::try::h45f576514b338db1
+                               at /rustc/17067e9ac6d7ecb70e50f92c1944e545188d2359/library/std/src/panicking.rs:552:19
+  37:     0x556d1de6edb0 - std::panic::catch_unwind::h4500d81ff06e11c2
+                               at /rustc/17067e9ac6d7ecb70e50f92c1944e545188d2359/library/std/src/panic.rs:359:14
+  38:     0x556d1de6edb0 - std::rt::lang_start_internal::{{closure}}::h37cab7e9dd591bd0
+                               at /rustc/17067e9ac6d7ecb70e50f92c1944e545188d2359/library/std/src/rt.rs:168:24
+  39:     0x556d1de6edb0 - std::panicking::try::do_call::h18dcd6ab68035fe0
+                               at /rustc/17067e9ac6d7ecb70e50f92c1944e545188d2359/library/std/src/panicking.rs:589:40
+  40:     0x556d1de6edb0 - std::panicking::try::h2ff15dd92aac3fb5
+                               at /rustc/17067e9ac6d7ecb70e50f92c1944e545188d2359/library/std/src/panicking.rs:552:19
+  41:     0x556d1de6edb0 - std::panic::catch_unwind::hffe66ef06337a6dd
+                               at /rustc/17067e9ac6d7ecb70e50f92c1944e545188d2359/library/std/src/panic.rs:359:14
+  42:     0x556d1de6edb0 - std::rt::lang_start_internal::h418648f91f5be3a1
+                               at /rustc/17067e9ac6d7ecb70e50f92c1944e545188d2359/library/std/src/rt.rs:164:5
+  43:     0x556d1d4a1167 - std::rt::lang_start::he3c7d846a6b7d95c
+                               at /home/leandro/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/std/src/rt.rs:198:5
+  44:     0x556d1d565c6e - main
+  45:     0x7f1f3b174d90 - __libc_start_call_main
+                               at ./csu/../sysdeps/nptl/libc_start_call_main.h:58:16
+  46:     0x7f1f3b174e40 - __libc_start_main_impl
+                               at ./csu/../csu/libc-start.c:392:3
+  47:     0x556d1d45bef5 - _start
+  48:                0x0 - <unknown>

@@ -24,7 +24,7 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 #[derive(Debug, Clone)]
-struct User {
+pub struct User {
     id: i64,
     username: String,
     pw_hash: Vec<u8>,
@@ -43,7 +43,7 @@ impl AuthUser for User {
 }
 
 #[derive(Clone)]
-struct Backend {
+pub struct Backend {
     state: Arc<AppState>,
 }
 
@@ -53,8 +53,8 @@ impl Backend {
     }
 }
 
-#[derive(Clone)]
-struct Credentials {
+#[derive(Clone, Deserialize)]
+pub struct Credentials {
     username: String,
     password: String,
 }
@@ -113,12 +113,6 @@ impl AuthnBackend for Backend {
     }
 }
 
-#[derive(Deserialize)]
-pub struct AuthForm {
-    pub username: String,
-    pub password: String,
-}
-
 pub fn hash_passwords(password: &str) -> Result<String, Error> {
     let salt = SaltString::generate(&mut OsRng);
     let argon2 = Argon2::default();
@@ -136,34 +130,25 @@ pub async fn show_login(State(state): State<Arc<AppState>>) -> Result<Html<Strin
     Ok(Html(rendered))
 }
 
+type AuthSession = axum_login::AuthSession<Backend>;
+
+#[axum::debug_handler]
 pub async fn handle_login(
-    State(state): State<Arc<AppState>>,
-    jar: CookieJar,
-    Form(form): Form<AuthForm>,
+    State(_state): State<Arc<AppState>>,
+    mut auth_session: AuthSession,
+    Form(form): Form<Credentials>,
 ) -> impl IntoResponse {
-    let user = sqlx::query!(
-        "SELECT id, password_hash FROM users WHERE username = $1",
-        form.username
-    )
-    .fetch_optional(&state.db_pool)
-    .await
-    .expect("DB Error - Username not found.");
+    let user = match auth_session.authenticate(form.clone()).await {
+        Ok(Some(user)) => user,
+        Ok(None) => return StatusCode::UNAUTHORIZED.into_response(),
+        Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+    };
 
-    if let Some(user) = user {
-        let parsed_hash = PasswordHash::new(&user.password_hash).unwrap();
-        if Argon2::default()
-            .verify_password(form.password.as_bytes(), &parsed_hash)
-            .is_ok()
-        {
-            let cookie = Cookie::build(("user_id", user.id.to_string()))
-                .path("/")
-                .http_only(true);
-
-            return (jar.add(cookie), Redirect::to("/")).into_response();
-        }
+    if auth_session.login(&user).await.is_err() {
+        return StatusCode::INTERNAL_SERVER_ERROR.into_response();
     }
 
-    Redirect::to("/login").into_response()
+    Redirect::to("/").into_response()
 }
 
 pub async fn show_register(State(state): State<Arc<AppState>>) -> Result<Html<String>, StatusCode> {
@@ -176,7 +161,7 @@ pub async fn show_register(State(state): State<Arc<AppState>>) -> Result<Html<St
 
 pub async fn handle_register(
     State(state): State<Arc<AppState>>,
-    Form(form): Form<AuthForm>,
+    Form(form): Form<Credentials>,
 ) -> Redirect {
     let password_hash = hash_passwords(&form.password).unwrap();
     let user_id = Uuid::new_v4();

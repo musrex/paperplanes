@@ -1,4 +1,5 @@
 use crate::AppState;
+use crate::handlers::auth::Backend;
 use axum::http::StatusCode;
 use axum::{Router, extract::State, response::Html, routing::get};
 use minijinja::context;
