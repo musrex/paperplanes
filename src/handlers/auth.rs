@@ -25,9 +25,9 @@ use uuid::Uuid;
 
 #[derive(Debug, Clone)]
 pub struct User {
-    id: i64,
-    username: String,
-    pw_hash: Vec<u8>,
+    pub id: i64,
+    pub username: String,
+    pub pw_hash: Vec<u8>,
 }
 
 impl AuthUser for User {
@@ -132,7 +132,6 @@ pub async fn show_login(State(state): State<Arc<AppState>>) -> Result<Html<Strin
 
 type AuthSession = axum_login::AuthSession<Backend>;
 
-#[axum::debug_handler]
 pub async fn handle_login(
     State(_state): State<Arc<AppState>>,
     mut auth_session: AuthSession,
@@ -149,6 +148,15 @@ pub async fn handle_login(
     }
 
     Redirect::to("/").into_response()
+}
+
+pub async fn handle_logout(
+    State(_state): State<Arc<AppState>>,
+    mut auth_session: AuthSession,
+) -> impl IntoResponse {
+    let _ = auth_session.logout().await;
+
+    Redirect::to("/")
 }
 
 pub async fn show_register(State(state): State<Arc<AppState>>) -> Result<Html<String>, StatusCode> {
