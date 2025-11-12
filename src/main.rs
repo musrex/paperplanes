@@ -7,7 +7,7 @@ use crate::handlers::{auth::Backend, handler_404};
 
 use anyhow::Result;
 use axum_login::{
-    AuthManagerLayerBuilder, login_required,
+    AuthManagerLayerBuilder,
     tower_sessions::{ExpiredDeletion, Expiry, SessionManagerLayer},
 };
 use dotenvy::dotenv;
