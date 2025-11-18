@@ -1,9 +1,18 @@
 use crate::AppState;
+use crate::db::DbPool;
 use crate::handlers::auth::Backend;
+use axum::handler::Handler;
+//use anyhow::Ok;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
-use axum::{Json, Router, extract::State, response::Html, routing::get};
+use axum::{
+    Json, Router,
+    extract::State,
+    response::Html,
+    routing::{get, patch},
+};
 use axum_login::AuthSession;
+use axum_login::tracing::info;
 use minijinja::context;
 use serde::Serialize;
 use sqlx::FromRow;
@@ -14,12 +23,17 @@ pub fn routes() -> Router<Arc<AppState>> {
         .route("/", get(handler_home))
         .route("/users", get(get_users))
         .route("/hello", get(json_handler))
+        .route(
+            "/users/message",
+            patch(set_user_message).with_state(shared_state),
+        )
 }
 
 use axum_extra::extract::cookie::{Cookie, CookieJar};
 
 #[derive(Serialize)]
-struct Message {
+struct ProfileMessage {
+    id: i32,
     content: String,
 }
 
@@ -42,10 +56,52 @@ async fn json_handler() -> impl IntoResponse {
     Json(payload)
 }
 
+#[axum::debug_handler]
 async fn set_user_message(
     State(state): State<Arc<AppState>>,
-    message: Message,
+    Json(payload): Json<ProfileMessage>,
 ) -> impl IntoResponse {
+    let query = sqlx::query!(
+        r#"
+        UPDATE users 
+        SET profile_text = $1 
+        WHERE id = $2 
+        "#,
+        payload.content,
+        payload.id,
+    )
+    .execute(&state.db_pool)
+    .await;
+
+    match query {
+        Ok(info) if info.rows_affected() > 0 => (
+            StatusCode::OK,
+            Json(serde_json::json!({
+                "status"  : "updated",
+                "user_id" : payload.id
+            })),
+        )
+            .into_response(),
+
+        Ok(_) => (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({
+                "error" : format!("User with id {} not found", payload.id),
+            })),
+        )
+            .into_response(),
+
+        Err(e) => {
+            eprintln!("Database error when updating profile: {e}");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({
+                    "error" : "Database error when updating profile: {e}"
+                })),
+            )
+                .into_response()
+        }
+    }
 }
 
 async fn get_users(State(state): State<Arc<AppState>>) -> impl IntoResponse {
