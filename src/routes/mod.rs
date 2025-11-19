@@ -1,7 +1,6 @@
 pub mod art;
 pub mod auth;
 pub mod home;
-pub mod user_functions;
 
 use crate::AppState;
 use axum::Router;
