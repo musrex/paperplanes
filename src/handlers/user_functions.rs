@@ -6,20 +6,20 @@ use serde::Serialize;
 use sqlx::FromRow;
 use std::sync::Arc;
 
-#[derive(Serialize)]
-struct ProfileMessage {
+#[derive(Serialize, serde::Deserialize)]
+pub struct ProfileMessage {
     id: i32,
     content: String,
 }
 
 #[derive(Serialize, FromRow)]
-struct User {
+pub struct User {
     id: i32,
     username: String,
 }
 
 #[derive(Serialize)]
-struct Users {
+pub struct Users {
     users: Vec<User>,
 }
 
@@ -105,4 +105,22 @@ pub async fn get_users(State(state): State<Arc<AppState>>) -> impl IntoResponse 
                 .into_response()
         }
     }
+}
+
+// TODO:
+// insert match statement for user variable
+pub async fn create_user(
+    State(state): State<Arc<AppState>>,
+    Json(payload): Json<User>,
+) -> impl IntoResponse {
+    let user = sqlx::query!(
+        r#"
+          INSERT INTO users (id, username)
+          VALUES ($1, $2)
+        "#,
+        payload.id,
+        payload.username
+    )
+    .execute(&state.db_pool)
+    .await;
 }
