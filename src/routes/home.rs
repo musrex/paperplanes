@@ -1,21 +1,12 @@
-use crate::AppState;
-use crate::db::DbPool;
-use crate::handlers::auth::Backend;
-use axum::handler::Handler;
-//use anyhow::Ok;
+use crate::{AppState, handlers::user_functions::*};
 use axum::http::StatusCode;
-use axum::response::IntoResponse;
 use axum::{
-    Json, Router,
+    Router,
     extract::State,
     response::Html,
     routing::{get, patch},
 };
-use axum_login::AuthSession;
-use axum_login::tracing::info;
 use minijinja::context;
-use serde::Serialize;
-use sqlx::FromRow;
 use std::sync::Arc;
 
 pub fn routes() -> Router<Arc<AppState>> {
@@ -23,119 +14,12 @@ pub fn routes() -> Router<Arc<AppState>> {
         .route("/", get(handler_home))
         .route("/users", get(get_users))
         .route("/hello", get(json_handler))
-        .route(
-            "/users/message",
-            patch(set_user_message).with_state(shared_state),
-        )
+        .route("/users/message", patch(set_user_message))
 }
 
-use axum_extra::extract::cookie::{Cookie, CookieJar};
+use axum_extra::extract::cookie::CookieJar;
 
-#[derive(Serialize)]
-struct ProfileMessage {
-    id: i32,
-    content: String,
-}
-
-#[derive(Serialize, FromRow)]
-struct User {
-    id: i32,
-    username: String,
-}
-
-#[derive(Serialize)]
-struct Users {
-    users: Vec<User>,
-}
-
-async fn json_handler() -> impl IntoResponse {
-    let payload = serde_json::json!({
-    "greeting": "Hello from Axum",
-    "detail": "Te amo Cordelia",
-    });
-    Json(payload)
-}
-
-#[axum::debug_handler]
-async fn set_user_message(
-    State(state): State<Arc<AppState>>,
-    Json(payload): Json<ProfileMessage>,
-) -> impl IntoResponse {
-    let query = sqlx::query!(
-        r#"
-        UPDATE users 
-        SET profile_text = $1 
-        WHERE id = $2 
-        "#,
-        payload.content,
-        payload.id,
-    )
-    .execute(&state.db_pool)
-    .await;
-
-    match query {
-        Ok(info) if info.rows_affected() > 0 => (
-            StatusCode::OK,
-            Json(serde_json::json!({
-                "status"  : "updated",
-                "user_id" : payload.id
-            })),
-        )
-            .into_response(),
-
-        Ok(_) => (
-            StatusCode::NOT_FOUND,
-            Json(serde_json::json!({
-                "error" : format!("User with id {} not found", payload.id),
-            })),
-        )
-            .into_response(),
-
-        Err(e) => {
-            eprintln!("Database error when updating profile: {e}");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({
-                    "error" : "Database error when updating profile: {e}"
-                })),
-            )
-                .into_response()
-        }
-    }
-}
-
-async fn get_users(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-    let rows: Result<Vec<User>, sqlx::Error> = sqlx::query_as!(
-        User,
-        r#"
-        SELECT id, username FROM users
-        "#,
-    )
-    .fetch_all(&state.db_pool)
-    .await;
-
-    match rows {
-        Ok(users) => {
-            let payload = Users { users };
-            Json(payload).into_response()
-        }
-        Err(e) => {
-            eprintln!("Database error while fetching users: {e}");
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                Json(serde_json::json!({
-                    "error": "Failed to fetch users."
-                })),
-            )
-                .into_response()
-        }
-    }
-}
-
-async fn handler_home(
-    State(state): State<Arc<AppState>>,
-    auth_session: AuthSession<Backend>,
-) -> Result<Html<String>, StatusCode> {
+async fn handler_home(State(state): State<Arc<AppState>>) -> Result<Html<String>, StatusCode> {
     let template = state.templates.get_template("home.jinja").unwrap();
     let jar = CookieJar::new();
     // This needs to be refactored. I don't like the nested if statements.
