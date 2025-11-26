@@ -76,7 +76,6 @@ async fn main() -> Result<()> {
         .await
         .unwrap();
 
-    println!("listening on {}", listener.local_addr().unwrap());
     axum::serve(listener, app)
         .with_graceful_shutdown(shutdown_signal(deletion_task.abort_handle()))
         .await?;
@@ -100,9 +99,6 @@ async fn shutdown_signal(deletion_task_abort_handle: AbortHandle) {
             .recv()
             .await;
     };
-
-    #[cfg(not(unix))]
-    let terminate = std::future::pending::<()>();
 
     tokio::select! {
         _ = ctrl_c => { deletion_task_abort_handle.abort() },
