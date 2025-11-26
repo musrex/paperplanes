@@ -8,18 +8,16 @@ use argon2::{
 };
 
 use axum::{
-    extract::{Form, FromRequestParts, State},
-    http::{StatusCode, request::Parts},
-    response::{Html, IntoResponse, Redirect},
+    Json,
+    extract::{Form, State},
+    http::StatusCode,
+    response::{IntoResponse, Redirect},
 };
 
-use axum_login::{AuthUser, AuthnBackend, UserId};
+use axum_login::{AuthUser, AuthnBackend};
 
-use axum_extra::extract::cookie::{Cookie, CookieJar};
-
-//use minijinja::{State, context};
-use serde::Deserialize;
-use sqlx;
+use serde::{Deserialize, Serialize};
+use sqlx::FromRow;
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -28,6 +26,12 @@ pub struct User {
     pub id: i64,
     pub username: String,
     pub pw_hash: Vec<u8>,
+}
+
+#[derive(Serialize, FromRow, serde::Deserialize)]
+pub struct NewUser {
+    username: String,
+    password: String,
 }
 
 impl AuthUser for User {
@@ -122,22 +126,16 @@ pub fn hash_passwords(password: &str) -> Result<String, Error> {
     Ok(password_hash)
 }
 
-pub async fn show_login(State(state): State<Arc<AppState>>) -> Result<Html<String>, StatusCode> {
-    let template = state.templates.get_template("login.jinja").unwrap();
-
-    let rendered = template.render(()).unwrap();
-
-    Ok(Html(rendered))
-}
-
 type AuthSession = axum_login::AuthSession<Backend>;
 
+// TODO:
+// Refactor to handle JSON
 pub async fn handle_login(
     State(_state): State<Arc<AppState>>,
     mut auth_session: AuthSession,
-    Form(form): Form<Credentials>,
+    Json(payload): Json<Credentials>,
 ) -> impl IntoResponse {
-    let user = match auth_session.authenticate(form.clone()).await {
+    let user = match auth_session.authenticate(payload).await {
         Ok(Some(user)) => user,
         Ok(None) => return StatusCode::UNAUTHORIZED.into_response(),
         Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
@@ -159,14 +157,6 @@ pub async fn handle_logout(
     Redirect::to("/")
 }
 
-pub async fn show_register(State(state): State<Arc<AppState>>) -> Result<Html<String>, StatusCode> {
-    let template = state.templates.get_template("register.jinja").unwrap();
-
-    let rendered = template.render(()).unwrap();
-
-    Ok(Html(rendered))
-}
-
 pub async fn handle_register(
     State(state): State<Arc<AppState>>,
     Form(form): Form<Credentials>,
@@ -186,4 +176,55 @@ pub async fn handle_register(
     .unwrap();
 
     Redirect::to("/login")
+}
+
+// TODO:
+// Better error handling for the password hashing function
+pub async fn create_user(
+    State(state): State<Arc<AppState>>,
+    Json(payload): Json<NewUser>,
+) -> impl IntoResponse {
+    let uuid = Uuid::new_v4();
+    let password = hash_passwords(&payload.password).unwrap();
+    let user = sqlx::query!(
+        r#"
+          INSERT INTO users (uuid, username, password_hash)
+          VALUES ($1, $2, $3)
+        "#,
+        uuid,
+        payload.username,
+        password,
+    )
+    .execute(&state.db_pool)
+    .await;
+
+    match user {
+        Ok(info) if info.rows_affected() > 0 => (
+            StatusCode::OK,
+            Json(serde_json::json!({
+                "status" : "updated",
+                "username": payload.username,
+            })),
+        )
+            .into_response(),
+
+        Ok(_) => (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({
+                "error" : format!("Error creating user {}", payload.username)
+            })),
+        )
+            .into_response(),
+
+        Err(e) => {
+            eprintln!("Database error while creating user: {e}.");
+            (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({
+                    "error": "Database error while creating user: {e}."
+                })),
+            )
+                .into_response()
+        }
+    }
 }
