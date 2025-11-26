@@ -1,10 +1,15 @@
 use crate::AppState;
+use argon2::{
+    Argon2, PasswordHasher,
+    password_hash::{SaltString, rand_core::OsRng},
+};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::{Json, extract::State};
 use serde::Serialize;
 use sqlx::FromRow;
 use std::sync::Arc;
+use uuid::Uuid;
 
 #[derive(Serialize, serde::Deserialize)]
 pub struct ProfileMessage {
@@ -12,10 +17,16 @@ pub struct ProfileMessage {
     content: String,
 }
 
-#[derive(Serialize, FromRow)]
+#[derive(Serialize, FromRow, serde::Deserialize)]
 pub struct User {
     id: i32,
     username: String,
+}
+
+#[derive(Serialize, FromRow, serde::Deserialize)]
+pub struct NewUser {
+    username: String,
+    password: String,
 }
 
 #[derive(Serialize)]
@@ -107,20 +118,54 @@ pub async fn get_users(State(state): State<Arc<AppState>>) -> impl IntoResponse 
     }
 }
 
-// TODO:
-// insert match statement for user variable
 pub async fn create_user(
     State(state): State<Arc<AppState>>,
-    Json(payload): Json<User>,
+    Json(payload): Json<NewUser>,
 ) -> impl IntoResponse {
+    let password = payload.password;
+    let salt = SaltString::generate(&mut OsRng);
+    let argon2 = Argon2::default();
+    let password_hash = argon2.hash_password(password.as_bytes(), &salt).unwrap();
+    let uuid = Uuid::new_v4();
     let user = sqlx::query!(
         r#"
-          INSERT INTO users (id, username)
-          VALUES ($1, $2)
+          INSERT INTO users (uuid, username, password_hash)
+          VALUES ($1, $2, $3)
         "#,
-        payload.id,
-        payload.username
+        uuid,
+        payload.username,
+        password_hash.to_string(),
     )
     .execute(&state.db_pool)
     .await;
+
+    match user {
+        Ok(info) if info.rows_affected() > 0 => (
+            StatusCode::OK,
+            Json(serde_json::json!({
+                "status" : "updated",
+                "username": payload.username,
+            })),
+        )
+            .into_response(),
+
+        Ok(_) => (
+            StatusCode::NOT_FOUND,
+            Json(serde_json::json!({
+                "error" : format!("Error creating user {}", payload.username)
+            })),
+        )
+            .into_response(),
+
+        Err(e) => {
+            eprintln!("Database error while creating user: {e}.");
+            (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({
+                    "error": "Database error while creating user: {e}."
+                })),
+            )
+                .into_response()
+        }
+    }
 }
