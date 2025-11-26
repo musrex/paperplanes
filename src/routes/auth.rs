@@ -6,7 +6,7 @@ use std::sync::Arc;
 
 pub fn routes() -> Router<Arc<AppState>> {
     Router::new()
-        .route("/login", get(show_login).post(handle_login))
-        .route("/register", get(show_register).post(handle_register))
-        .route("/logout", get(handle_logout))
+        //.route("/login", get(show_login).post(handle_login))
+        //.route("/register", get(show_register).post(handle_register))
+        //.route("/logout", get(handle_logout))
 }
