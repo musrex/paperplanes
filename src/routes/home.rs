@@ -4,7 +4,7 @@ use axum::{
     Router,
     extract::State,
     response::Html,
-    routing::{get, patch},
+    routing::{get, patch, post},
 };
 use minijinja::context;
 use std::sync::Arc;
@@ -15,6 +15,7 @@ pub fn routes() -> Router<Arc<AppState>> {
         .route("/users", get(get_users))
         .route("/hello", get(json_handler))
         .route("/users/message", patch(set_user_message))
+        .route("/users/create_user", post(create_user))
 }
 
 use axum_extra::extract::cookie::CookieJar;
