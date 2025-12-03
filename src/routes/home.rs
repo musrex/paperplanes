@@ -14,7 +14,7 @@ pub fn routes() -> Router<Arc<AppState>> {
         .route("/", get(handler_home))
         .route("/users", get(get_users))
         .route("/hello", get(json_handler))
-        .route("/users/message", patch(set_user_message))
+        .route("/users/message", patch(set_profile_message))
         .route("/users/create_user", post(create_user))
 }
 
