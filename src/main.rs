@@ -76,6 +76,8 @@ async fn main() -> Result<()> {
         .await
         .unwrap();
 
+    println!("listening on {}", listener.local_addr().unwrap());
+
     axum::serve(listener, app)
         .with_graceful_shutdown(shutdown_signal(deletion_task.abort_handle()))
         .await?;
