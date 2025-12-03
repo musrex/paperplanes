@@ -43,7 +43,7 @@ pub async fn json_handler() -> impl IntoResponse {
 }
 
 #[axum::debug_handler]
-pub async fn set_user_message(
+pub async fn set_profile_message(
     State(state): State<Arc<AppState>>,
     Json(payload): Json<ProfileMessage>,
 ) -> impl IntoResponse {
