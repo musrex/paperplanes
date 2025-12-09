@@ -13,12 +13,10 @@ use axum_login::{
 use dotenvy::dotenv;
 use minijinja::{Environment, path_loader};
 
+use std::{env, sync::Arc};
 use time::Duration;
 use tokio::{signal, task::AbortHandle};
-//use tower_sessions::cookie::Key;
 use tower_sessions_sqlx_store::PostgresStore;
-//use minijinja_autoreload::AutoReloader;
-use std::{env, sync::Arc};
 
 #[derive(Clone)]
 pub struct AppState {
@@ -48,8 +46,6 @@ async fn main() -> Result<()> {
             .clone()
             .continuously_delete_expired(tokio::time::Duration::from_secs(60)),
     );
-
-    //let key = Key::generate();
 
     let session_layer = SessionManagerLayer::new(session_store)
         .with_secure(false)
