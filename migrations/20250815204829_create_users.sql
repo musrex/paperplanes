@@ -1,33 +1,34 @@
 CREATE TABLE users (
-    id SERIAL PRIMARY KEY,
-    uuid UUID NOT NULL,
-    username TEXT UNIQUE NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    uuid TEXT NOT NULL UNIQUE,
+    username TEXT NOT NULL UNIQUE,
+    email TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW(),
-    role TEXT DEFAULT 'user',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    role TEXT NOT NULL DEFAULT 'user',
     reset_token TEXT,
-    reset_token_expires TIMESTAMP,
+    reset_token_expires DATETIME,
     profile_text TEXT
 );
 
 CREATE TABLE groups (
-    id SERIAL PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW()
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE group_members (
-    group_id INT REFERENCES groups(id) ON DELETE CASCADE,
-    user_id INT REFERENCES users(id) ON DELETE CASCADE,
+    group_id INTEGER REFERENCES groups(id) ON DELETE CASCADE,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
     PRIMARY KEY (group_id, user_id)
 );
 
 CREATE TABLE messages (
-    id SERIAL PRIMARY KEY,
-    from_user INT REFERENCES users(id) ON DELETE CASCADE,
-    to_user INT REFERENCES users(id) ON DELETE CASCADE,
-    group_id INT REFERENCES groups(id),
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    from_user INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    to_user INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    group_id INTEGER REFERENCES groups(id),
     content TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW(),
-    expiration TIMESTAMP NOT NULL
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    expiration DATETIME NOT NULL
  );
