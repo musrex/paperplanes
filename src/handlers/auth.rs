@@ -91,7 +91,7 @@ impl AuthnBackend for Backend {
             .is_ok()
         {
             Ok(Some(User {
-                id: row.id as i64,
+                id: row.id.expect("id should not be null"),
                 username: row.username,
                 pw_hash: row.password_hash.into_bytes(),
             }))
@@ -101,9 +101,10 @@ impl AuthnBackend for Backend {
     }
 
     async fn get_user(&self, id: &i64) -> Result<Option<Self::User>, Self::Error> {
+        let user_id = *id as i64;
         let row = sqlx::query!(
             "SELECT id, username, password_hash FROM users WHERE id = $1",
-            id as &i64
+            user_id
         )
         .fetch_optional(&self.state.db_pool)
         .await

@@ -13,13 +13,13 @@ use uuid::Uuid;
 
 #[derive(Serialize, serde::Deserialize)]
 pub struct ProfileMessage {
-    id: i32,
+    id: i64,
     content: String,
 }
 
 #[derive(Serialize, FromRow, serde::Deserialize)]
 pub struct User {
-    id: i32,
+    id: i64,
     username: String,
 }
 
@@ -94,7 +94,7 @@ pub async fn get_users(State(state): State<Arc<AppState>>) -> impl IntoResponse 
     let rows: Result<Vec<User>, sqlx::Error> = sqlx::query_as!(
         User,
         r#"
-        SELECT id, username FROM users
+        SELECT id as "id!", username FROM users
         "#,
     )
     .fetch_all(&state.db_pool)
@@ -126,6 +126,7 @@ pub async fn create_user(
     let salt = SaltString::generate(&mut OsRng);
     let argon2 = Argon2::default();
     let password_hash = argon2.hash_password(password.as_bytes(), &salt).unwrap();
+    let password_hash_string = password_hash.to_string();
     let uuid = Uuid::new_v4();
     let user = sqlx::query!(
         r#"
@@ -134,7 +135,7 @@ pub async fn create_user(
         "#,
         uuid,
         payload.username,
-        password_hash.to_string(),
+        password_hash_string,
     )
     .execute(&state.db_pool)
     .await;

@@ -16,7 +16,7 @@ use minijinja::{Environment, path_loader};
 use std::{env, sync::Arc};
 use time::Duration;
 use tokio::{signal, task::AbortHandle};
-use tower_sessions_sqlx_store::PostgresStore;
+use tower_sessions_sqlx_store::SqliteStore;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -34,7 +34,7 @@ async fn main() -> Result<()> {
     let db_pool = init_db(&database_url).await?;
 
     // session layer
-    let session_store = PostgresStore::new(db_pool.clone());
+    let session_store = SqliteStore::new(db_pool.clone());
     session_store
         .migrate()
         .await
